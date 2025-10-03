@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title>CSR Process Chatbot</title>
+  <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+  <div class='container'>
+    <header>
+      <h1>CSR Process Chatbot</h1>
+      <button id='reindexBtn' title='Rebuild vector index from docs'>Rebuild Index</button>
+    </header>
+
+    <section class='upload'>
+      <form id='uploadForm'>
+        <input type='file' name='file' id='fileInput' />
+        <button type='submit'>Upload Doc</button>
+        <span id='uploadStatus'></span>
+      </form>
+      <p class='hint'>Supported: PDF, DOCX, TXT, MD. Files go into <code>/knowledgebase</code>.</p>
+    </section>
+
+    <section id='chat'>
+      <div id='history'></div>
+      <div class='composer'>
+        <input id='msg' placeholder='Ask a question about your process...' />
+        <button id='send'>Send</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const historyEl = document.getElementById('history');
+    const msgEl = document.getElementById('msg');
+    const sendEl = document.getElementById('send');
+    const reindexBtn = document.getElementById('reindexBtn');
+
+    function addBubble(role, text, sources) {
+      const wrap = document.createElement('div');
+      wrap.className = 'bubble ' + role;
+      const p = document.createElement('p');
+      p.textContent = text;
+      wrap.appendChild(p);
+      if (sources && sources.length) {
+        const details = document.createElement('details');
+        const sum = document.createElement('summary');
+        sum.textContent = 'Sources';
+        details.appendChild(sum);
+        const ul = document.createElement('ul');
+        sources.forEach(s => {
+          const li = document.createElement('li');
+          li.textContent = `${s.source} (score ${s.score.toFixed(3)}) [chunk ${s.chunk_index}]`;
+          ul.appendChild(li);
+        });
+        details.appendChild(ul);
+        wrap.appendChild(details);
+      }
+      historyEl.appendChild(wrap);
+      historyEl.scrollTop = historyEl.scrollHeight;
+    }
+
+    sendEl.addEventListener('click', async () => {
+      const msg = msgEl.value.trim();
+      if (!msg) return;
+      addBubble('user', msg);
+      msgEl.value = '';
+      addBubble('assistant', '…thinking…');
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: msg})
+      });
+      const data = await res.json();
+      historyEl.lastChild.querySelector('p').textContent = data.reply || '(no reply)';
+      if (data.sources) {
+        const sources = data.sources;
+        historyEl.lastChild.appendChild(document.createElement('hr'));
+        const d = document.createElement('div');
+        d.className = 'sources-inline';
+        sources.slice(0,3).forEach(s => {
+          const tag = document.createElement('span');
+          tag.className = 'tag';
+          tag.textContent = s.source;
+          d.appendChild(tag);
+        });
+        historyEl.lastChild.appendChild(d);
+      }
+    });
+
+    reindexBtn.addEventListener('click', async () => {
+      reindexBtn.disabled = true;
+      reindexBtn.textContent = 'Rebuilding…';
+      try {
+        const res = await fetch('/api/reindex', {method: 'POST'});
+        const data = await res.json();
+        alert(JSON.stringify(data, null, 2));
+      } catch (e) {
+        alert('Reindex failed: ' + e.message);
+      } finally {
+        reindexBtn.disabled = false;
+        reindexBtn.textContent = 'Rebuild Index';
+      }
+    });
+
+    // Upload
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return;
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/upload', {method: 'POST', body: fd});
+      const data = await res.json();
+      document.getElementById('uploadStatus').textContent = data.status ? 'Uploaded' : (data.error || 'Error');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+*{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+body{margin:0;background:#0b1220;color:#e7ecf3}
+.container{max-width:900px;margin:0 auto;padding:24px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+h1{font-size:22px;margin:0}
+button{border:none;padding:10px 14px;border-radius:12px;cursor:pointer;background:#1f6feb;color:#fff}
+button:disabled{opacity:.6;cursor:not-allowed}
+.upload{background:#0f1a2b;border:1px solid #1b2a44;padding:12px;border-radius:16px;margin:12px 0}
+#chat{background:#0f1a2b;border:1px solid #1b2a44;height:70vh;border-radius:16px;display:flex;flex-direction:column}
+#history{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.bubble{max-width:80%;padding:12px 14px;border-radius:16px;line-height:1.4}
+.bubble.user{align-self:flex-end;background:#1b2a44}
+.bubble.assistant{align-self:flex-start;background:#12233d}
+.composer{display:flex;gap:8px;padding:10px;border-top:1px solid #1b2a44}
+.composer input{flex:1;padding:12px;border-radius:12px;border:1px solid #1b2a44;background:#091429;color:#e7ecf3}
+.hint{opacity:.8;font-size:12px}
+.sources-inline{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.tag{background:#1b2a44;border:1px solid #25406b;border-radius:999px;padding:4px 8px;font-size:12px}
+details{margin-top:8px}
+summary{cursor:pointer}
+code{background:#091429;border:1px solid #1b2a44;border-radius:6px;padding:2px 6px}
